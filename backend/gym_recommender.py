@@ -1,11 +1,11 @@
 import os
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 class RoutineRequest(BaseModel):
-    location: str = Field(default="Bengaluru, India", description="User's city or locality, e.g. Bengaluru, Mumbai, Delhi")
-    goal: str = Field(..., description="E.g. Hypertrophy, Strength, Fat Loss, Athleticism")
-    performance_score: int = Field(..., ge=1, le=100, description="Score between 1 and 100")
+    location: Optional[str] = Field(default="Bengaluru, India", description="User's city or locality, e.g. Bengaluru, Mumbai, Delhi")
+    goal: Optional[str] = Field(default="Hypertrophy", description="E.g. Hypertrophy, Strength, Fat Loss, Athleticism")
+    performance_score: Optional[int] = Field(default=70, description="Score between 1 and 100")
 
 class Exercise(BaseModel):
     name: str
@@ -274,9 +274,9 @@ def get_indian_gyms_for_location(location: str) -> List[LocalGym]:
         ]
 
 async def recommend_gyms_and_routines(req: RoutineRequest) -> RoutineResponse:
-    location = req.location.strip() or "Bengaluru, India"
-    goal = req.goal
-    score = req.performance_score
+    location = (req.location or "Bengaluru, India").strip() or "Bengaluru, India"
+    goal = req.goal or "Hypertrophy"
+    score = min(100, max(1, req.performance_score or 70))
 
     local_gyms = get_indian_gyms_for_location(location)
 

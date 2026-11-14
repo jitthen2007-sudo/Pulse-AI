@@ -32,7 +32,7 @@ class ChatMessage(BaseModel):
     content: str
 
 class ChatRequest(BaseModel):
-    message: str
+    message: Optional[str] = Field(default="", description="User message text")
     history: Optional[List[ChatMessage]] = Field(default_factory=list)
 
 class ChatResponse(BaseModel):
@@ -40,7 +40,7 @@ class ChatResponse(BaseModel):
     sentiment_detected: Optional[str] = "Motivated & Focused"
     actionable_tips: Optional[List[str]] = Field(default_factory=list)
     motivational_quote: Optional[str] = "Discipline is choosing between what you want now and what you want most."
-    source: str = "gemini"
+    source: str = "pulse-engine"
 
 def get_gemini_client():
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
@@ -58,48 +58,70 @@ def get_gemini_model() -> str:
     return os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 async def generate_chat_response(req: ChatRequest) -> ChatResponse:
-    user_msg = req.message.strip()
-    if not user_msg:
-        raise ValueError("Message cannot be empty")
-
-    client = get_gemini_client()
-    if client:
-        try:
-            contents = []
-            for h in (req.history or [])[-6:]:
-                contents.append(f"{h.role.capitalize()}: {h.content}")
-            contents.append(f"User: {user_msg}")
-            prompt_text = "\n\n".join(contents)
-            
-            model_name = get_gemini_model()
-            config = types.GenerateContentConfig(
-                system_instruction=COACH_SYSTEM_PROMPT,
-                temperature=0.7,
-                max_output_tokens=1400
-            )
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt_text,
-                config=config
-            )
-            reply = response.text or "I am with you. Lock in and let's achieve greatness."
-            
-            sentiment = detect_sentiment(user_msg)
-            tips = extract_or_default_tips(user_msg)
-            quote = get_motivational_quote(sentiment)
-
+    try:
+        user_msg = (req.message or "").strip()
+        if not user_msg:
             return ChatResponse(
-                reply=reply,
-                sentiment_detected=sentiment,
-                actionable_tips=tips,
-                motivational_quote=quote,
-                source="gemini"
+                reply=(
+                    "### ⚡ Pulse AI Cyber Coach Online\n\n"
+                    "I am your **Autonomous Biomechanics & Motivational Mentor**.\n\n"
+                    "Ask me about:\n"
+                    "* **🏋️ Squat Biomechanics & Knee Caving:** Moment arms and 95° depth.\n"
+                    "* **🔥 Overcoming Laziness & Fatigue:** Autoregulation and mental grit.\n"
+                    "* **🍛 Indian High-Protein Nutrition:** Paneer, soya chunks, dal, and desi eggs.\n"
+                    "* **📊 Workout Splits & Progressive Overload:** PPL, Upper/Lower, and deload protocols."
+                ),
+                sentiment_detected="Ready to Coach",
+                actionable_tips=[
+                    "Ask a specific lifting form or biomechanics question.",
+                    "Tell me how you are feeling today: tired, sore, or hyped.",
+                    "Inquire about high-protein Indian vegetarian meal combinations."
+                ],
+                motivational_quote="“The secret of getting ahead is getting started.”",
+                source="pulse-engine"
             )
-        except Exception as e:
-            print(f"Notice: Falling back to Pulse Autonomous Engine: {e}")
 
-    # Fallback to Pulse Autonomous Kinesiology & Motivational Engine 3.0
-    return generate_autonomous_response(user_msg)
+        client = get_gemini_client()
+        if client:
+            try:
+                contents = []
+                for h in (req.history or [])[-6:]:
+                    contents.append(f"{h.role.capitalize()}: {h.content}")
+                contents.append(f"User: {user_msg}")
+                prompt_text = "\n\n".join(contents)
+                
+                model_name = get_gemini_model()
+                config = types.GenerateContentConfig(
+                    system_instruction=COACH_SYSTEM_PROMPT,
+                    temperature=0.7,
+                    max_output_tokens=1400
+                )
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt_text,
+                    config=config
+                )
+                reply = response.text or "I am with you. Lock in and let's achieve greatness."
+                
+                sentiment = detect_sentiment(user_msg)
+                tips = extract_or_default_tips(user_msg)
+                quote = get_motivational_quote(sentiment)
+
+                return ChatResponse(
+                    reply=reply,
+                    sentiment_detected=sentiment,
+                    actionable_tips=tips,
+                    motivational_quote=quote,
+                    source="gemini"
+                )
+            except Exception as e:
+                print(f"Notice: Falling back to Pulse Autonomous Engine: {e}")
+
+        # Fallback to Pulse Autonomous Kinesiology & Motivational Engine 3.0
+        return generate_autonomous_response(user_msg)
+    except Exception as fatal_e:
+        print(f"Error in generate_chat_response (recovering gracefully): {fatal_e}")
+        return generate_autonomous_response(req.message or "fitness guidance")
 
 def detect_sentiment(text: str) -> str:
     lower = text.lower()
