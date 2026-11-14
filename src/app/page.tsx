@@ -1,82 +1,72 @@
 'use client';
 
 import React, { useState } from 'react';
-import Navbar from '@/components/Navbar';
+import { AnimatePresence, motion } from 'framer-motion';
+import Sidebar from '@/components/Sidebar';
 import VirtualCoach from '@/components/VirtualCoach';
 import DieticianModule from '@/components/DieticianModule';
 import RoutineModule from '@/components/RoutineModule';
 import PoseCoachModule from '@/components/PoseCoachModule';
-import { 
-  Bot, 
-  Utensils, 
-  Dumbbell, 
-  Camera, 
-  Activity, 
-  ShieldCheck, 
-  Zap, 
-  Sparkles,
-  ArrowRight
-} from 'lucide-react';
+import { ShieldCheck, Cpu, Activity } from 'lucide-react';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<string>('pose');
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0f1d] text-slate-100">
-      {/* Top Navbar */}
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="min-h-screen flex bg-[#03060f] text-slate-100 font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
+      {/* Sleek Minimalist Futuristic Sidebar */}
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Hero Quick Banner for Hackathon Presentation */}
-      <section className="border-b border-slate-800/60 bg-gradient-to-b from-[#0d1527] to-[#0a0f1d] px-4 py-3">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-300">
-            <span className="flex h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
-            <span className="font-semibold text-white">Pulse AI Hackathon Edition:</span>
-            <span className="text-slate-400 hidden sm:inline">
-              Client-Side Vision + FastAPI Backend + Google Gemini 2.5
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <ShieldCheck className="h-3.5 w-3.5 text-teal-400" />
-              <span>Zero Video Upload (100% Private)</span>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-6 overflow-x-hidden">
+        {/* Minimalist Futuristic HUD Top Banner */}
+        <header className="border-b border-cyan-500/15 bg-[#050811]/90 backdrop-blur-2xl px-4 sm:px-8 py-2.5 sticky top-0 z-30">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+              <span className="font-bold text-white tracking-widest uppercase">
+                PULSE // KINEMATIC HUD
+              </span>
+              <span className="text-slate-600 hidden sm:inline">|</span>
+              <span className="text-cyan-400/80 hidden sm:inline text-[11px]">
+                INDIAN BIOMECHANICS & NUTRITION ENGINE
+              </span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-400 hidden md:flex">
-              <Zap className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Next.js Rewrites to FastAPI</span>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 rounded-full bg-cyan-500/10 px-3 py-0.5 text-cyan-300 border border-cyan-500/20 text-[10px]">
+                <ShieldCheck className="h-3 w-3 text-cyan-400" />
+                <span>100% IN-BROWSER CV (ZERO CLOUD VIDEO)</span>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 text-[10px]">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>STATUS: NOMINAL</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </header>
 
-      {/* Main Tab Viewport */}
-      <main className="flex-1 py-4 sm:py-6">
-        {activeTab === 'coach' && <VirtualCoach />}
-        {activeTab === 'diet' && <DieticianModule />}
-        {activeTab === 'routine' && (
-          <RoutineModule onGoToPoseCoach={() => setActiveTab('pose')} />
-        )}
-        {activeTab === 'pose' && <PoseCoachModule />}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950/80 py-4 px-4 text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-teal-400" />
-            <span className="font-bold text-white">Pulse AI</span>
-            <span>— Autonomous Fitness & Form Correction Platform</span>
-          </div>
-          <div className="flex items-center gap-4 text-slate-400">
-            <span>FastAPI Secure Backend</span>
-            <span>•</span>
-            <span>MediaPipe Pose Kinematics</span>
-            <span>•</span>
-            <span>Gemini Intelligence</span>
-          </div>
-        </div>
-      </footer>
+        {/* Dynamic Viewport */}
+        <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="h-full"
+            >
+              {activeTab === 'coach' && <VirtualCoach />}
+              {activeTab === 'diet' && <DieticianModule />}
+              {activeTab === 'routine' && (
+                <RoutineModule onGoToPoseCoach={() => setActiveTab('pose')} />
+              )}
+              {activeTab === 'pose' && <PoseCoachModule />}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
     </div>
   );
 }

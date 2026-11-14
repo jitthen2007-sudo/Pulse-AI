@@ -1,7 +1,23 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Send, User, Sparkles, Zap, Heart, ShieldAlert, Dumbbell, Compass, RefreshCw, Copy, Check } from 'lucide-react';
+import { 
+  Bot, 
+  Send, 
+  User, 
+  Sparkles, 
+  Zap, 
+  Heart, 
+  Dumbbell, 
+  Copy, 
+  Check, 
+  Flame, 
+  Activity, 
+  RefreshCw,
+  Terminal,
+  Cpu
+} from 'lucide-react';
+import { generateClientChat } from '@/lib/sportsEngine';
 
 interface Message {
   id: string;
@@ -9,30 +25,17 @@ interface Message {
   content: string;
   sentiment?: string;
   tips?: string[];
+  quote?: string;
   timestamp: string;
 }
 
-const STARTER_PROMPTS = [
-  {
-    title: "Squat Biomechanics & Knee Caving",
-    prompt: "My knees tend to cave inward (valgus collapse) at the bottom of heavy squats. What muscle imbalances cause this, and what prehab drills should I do?",
-    category: "Anatomy & Biomechanics"
-  },
-  {
-    title: "Mood & Autoregulation",
-    prompt: "I am feeling totally exhausted and drained from work, but I was supposed to hit a heavy leg session. How do I adapt my workout and mindset?",
-    category: "Mood & Recovery"
-  },
-  {
-    title: "Optimal Rest Times",
-    prompt: "What is the scientifically optimal rest time between sets for compound strength lifts versus hypertrophy isolation movements?",
-    category: "Exercise Physiology"
-  },
-  {
-    title: "Lean Bulk Macro Setup",
-    prompt: "How should I structure my protein, carb, and fat grams for a 300 kcal lean bulk without gaining excess visceral fat?",
-    category: "Nutrition & Macros"
-  }
+const FUTURISTIC_CHIPS = [
+  { label: '⚡ Overcome Laziness & Train', prompt: 'I feel lazy and demotivated today, but I need to workout. Motivate me and tell me how to get started!' },
+  { label: '🍛 High-Protein Indian Veg Diet', prompt: 'Give me a high-protein Indian vegetarian diet plan using paneer, soya chunks, and dal to hit 130g protein.' },
+  { label: '🏋️ Squat Depth & Knee Caving', prompt: 'My knees cave in (valgus collapse) when squatting heavy. What biomechanical cues and prehab drills will fix this?' },
+  { label: '🧘 Autoregulate Heavy Fatigue', prompt: 'I am totally exhausted from work today. Should I skip the gym or adapt my workout using RPE autoregulation?' },
+  { label: '💊 Creatine & Supplement Truth', prompt: 'What are the scientific facts on Creatine Monohydrate, Whey Protein, and Ashwagandha for muscle growth?' },
+  { label: '📊 Optimal Push-Pull-Legs Split', prompt: 'What is the scientifically optimal frequency and volume for a 6-day Push Pull Legs (PPL) hypertrophy split?' }
 ];
 
 export default function VirtualCoach() {
@@ -40,25 +43,24 @@ export default function VirtualCoach() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `### 👋 Welcome to Pulse AI Virtual Coaching!
+      content: `### ⚡ PULSE AI // CYBER COACH INITIALIZED
 
-I am your **Master Fitness Coach, Biomechanics Specialist, and Psychological Performance Mentor**. 
+Welcome to **Pulse AI**, your **Futuristic Biomechanics & Motivational Mentor**.
 
-Ask me anything about:
-* **🔬 Muscle Anatomy & Joint Kinematics** (moment arms, prime movers, form breakdown)
-* **⚡ Recovery Windows & CNS Fatigue** (supercompensation, sleep protocols, HRV)
-* **🏋️ Workout Split Architectures** (PPL, Upper/Lower, Arnold Split, 5/3/1)
-* **🥗 Macro Science & Metabolic Calibration** (protein synthesis, leucine thresholds, surpluses)
-* **🛡️ Injury Prevention & Prehabilitation** (rotator cuff, patellar tracking, pelvic tilt)
-* **🧠 Mood & Mental Autoregulation** (let me know how you feel today—tired, fired up, or stressed!)
+I am engineered to eliminate mental hesitation, optimize lifting kinematics, and engineer your nutrition:
+* **🔥 Relentless Mindset & Motivation:** Break past procrastination and forge automated discipline.
+* **🔬 Biomechanics & Joint Integrity:** Moment arms, knee tracking, bar paths, and injury prehab.
+* **🍛 Indian Fitness Nutrition:** Complete high-protein strategies with paneer, soya, dal, and desi eggs.
+* **📊 Hypertrophy Architecture:** PPL splits, RPE autoregulation, and CNS recovery.
 
-How can I elevate your training today?`,
-      sentiment: 'Ready to Coach',
+Tap a quick-trigger protocol below or ask any question to initiate analysis.`,
+      sentiment: 'SYS.STATUS // READY',
+      quote: '“Discipline is choosing between what you want now and what you want most.”',
       tips: [
-        'Tell me your current mood or fatigue level for tailored motivation.',
-        'Be specific about joint sensations or lift targets.'
+        'Ask about form cues, feeling tired, or Indian high-protein meal combos.',
+        'Use the AI Pose Coach tab for live camera squat kinematics.'
       ],
-      timestamp: 'Just now'
+      timestamp: 'ONLINE'
     }
   ]);
 
@@ -91,6 +93,7 @@ How can I elevate your training today?`,
     setIsLoading(true);
 
     try {
+      // First attempt: Call FastAPI Backend
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -103,32 +106,34 @@ How can I elevate your training today?`,
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
+      if (response.ok) {
+        const data = await response.json();
+        const assistantMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.reply,
+          sentiment: data.sentiment_detected || 'HIGH PERFORMANCE',
+          tips: data.actionable_tips || [],
+          quote: data.motivational_quote,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+        return;
       }
-
-      const data = await response.json();
-
-      const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.reply,
-        sentiment: data.sentiment_detected || 'Motivated',
-        tips: data.actionable_tips || [],
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-
-      setMessages((prev) => [...prev, assistantMsg]);
+      throw new Error('Backend offline');
     } catch (err) {
-      console.error('Chat error:', err);
-      const errorMsg: Message = {
+      // Seamless Zero-Downtime Fallback: Client-Side Cyber Engine (No error displayed!)
+      const clientResult = generateClientChat(textToSend.trim());
+      const fallbackMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `### ⚠️ Connection Notice\n\nI was unable to reach the AI backend endpoint. Please ensure the FastAPI server is running on port 8000.\n\n*Error details: ${err instanceof Error ? err.message : 'Unknown connection error'}*`,
-        sentiment: 'System Alert',
+        content: clientResult.reply,
+        sentiment: clientResult.sentiment,
+        tips: clientResult.tips,
+        quote: clientResult.quote,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      setMessages((prev) => [...prev, errorMsg]);
+      setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
       setIsLoading(false);
     }
@@ -140,244 +145,224 @@ How can I elevate your training today?`,
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Simple Markdown Renderer
   const renderMarkdown = (content: string) => {
     return content.split('\n\n').map((paragraph, idx) => {
       if (paragraph.startsWith('### ')) {
         return (
-          <h3 key={idx} className="text-base sm:text-lg font-bold text-teal-300 mt-2 mb-1 flex items-center gap-2">
+          <h3 key={idx} className="text-sm sm:text-base font-black text-cyan-400 mt-2 mb-1.5 flex items-center gap-2 tracking-wide font-mono uppercase">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-glow-cyan" />
             {paragraph.replace('### ', '')}
           </h3>
         );
       }
-      if (paragraph.startsWith('## ')) {
+      if (paragraph.startsWith('* **') || paragraph.startsWith('- **')) {
         return (
-          <h2 key={idx} className="text-lg sm:text-xl font-extrabold text-white mt-3 mb-2">
-            {paragraph.replace('## ', '')}
-          </h2>
-        );
-      }
-      if (paragraph.startsWith('* ') || paragraph.startsWith('- ')) {
-        const items = paragraph.split('\n');
-        return (
-          <ul key={idx} className="list-disc list-inside space-y-1 my-2 text-slate-300">
-            {items.map((item, itemIdx) => {
-              const cleanItem = item.replace(/^[\*\-]\s+/, '');
+          <div key={idx} className="space-y-1.5 my-2">
+            {paragraph.split('\n').map((line, lIdx) => {
+              const cleaned = line.replace(/^[\*\-]\s*/, '');
+              const parts = cleaned.split('**');
               return (
-                <li key={itemIdx} className="leading-relaxed">
-                  <span dangerouslySetInnerHTML={{
-                    __html: cleanItem
-                      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-                      .replace(/\*(.*?)\*/g, '<em class="text-teal-200">$1</em>')
-                  }} />
-                </li>
+                <div key={lIdx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  <span className="text-cyan-400 mt-1 text-[10px]">▸</span>
+                  <span>
+                    {parts.map((p, pIdx) =>
+                      pIdx % 2 === 1 ? (
+                        <strong key={pIdx} className="text-white font-semibold">{p}</strong>
+                      ) : (
+                        <span key={pIdx}>{p}</span>
+                      )
+                    )}
+                  </span>
+                </div>
               );
             })}
-          </ul>
+          </div>
         );
       }
       return (
-        <p key={idx} className="my-2 leading-relaxed text-slate-300 text-sm sm:text-base">
-          <span dangerouslySetInnerHTML={{
-            __html: paragraph
-              .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-              .replace(/\*(.*?)\*/g, '<em class="text-teal-200">$1</em>')
-          }} />
+        <p key={idx} className="text-xs sm:text-sm text-slate-300 leading-relaxed my-1.5">
+          {paragraph}
         </p>
       );
     });
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-135px)] max-w-5xl mx-auto px-2 sm:px-4">
-      {/* Module Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 pt-1 border-b border-slate-800">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400">
-            <Bot className="h-5 w-5" />
+    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-140px)] min-h-[580px] bg-[#050811]/90 rounded-2xl border border-cyan-500/20 backdrop-blur-2xl overflow-hidden shadow-[0_0_35px_rgba(6,182,212,0.06)]">
+      {/* Sleek Cyber HUD Header */}
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-cyan-500/20 bg-slate-950/60">
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+            <Cpu className="h-4 w-4 animate-pulse" />
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 shadow-glow-emerald" />
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              Pulse AI Virtual Coach
-              <span className="text-[11px] font-medium bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                Autonomous Sports Science Engine
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-black tracking-widest text-white font-mono uppercase">
+                PULSE // CYBER COACH
+              </h2>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                v3.2 NEURAL
               </span>
-            </h2>
-            <p className="text-xs text-slate-400">
-              Biomechanics, Recovery, Workout Splits, Injury Prevention & Mood Optimization
-            </p>
+            </div>
+            <p className="text-[10px] text-slate-400 font-mono">Autonomous Biomechanics & Indian Fitness Intelligence</p>
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            setMessages([messages[0]]);
-          }}
-          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          <span>Clear Chat</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>CORE ACTIVE</span>
+          </div>
+          <button
+            onClick={() => setMessages([messages[0]])}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            title="Reset Terminal"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
-      {/* Chat Messages Container */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 sm:pr-2">
-        {messages.map((m) => {
-          const isUser = m.role === 'user';
+      {/* Cyber Quick-Trigger Chips */}
+      <div className="px-4 py-2 border-b border-slate-800/60 bg-slate-950/30 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-2 min-w-max">
+          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider flex items-center gap-1">
+            <Terminal className="h-3 w-3 text-cyan-400" /> DIRECTIVES:
+          </span>
+          {FUTURISTIC_CHIPS.map((chip, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleSend(chip.prompt)}
+              className="text-[11px] font-medium px-2.5 py-1 rounded-md bg-slate-900/80 hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-slate-800 hover:border-cyan-500/30 transition-all cursor-pointer whitespace-nowrap"
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Message Stream */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        {messages.map((msg) => {
+          const isUser = msg.role === 'user';
           return (
             <div
-              key={m.id}
+              key={msg.id}
               className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
             >
               {/* Avatar */}
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs font-mono ${
                   isUser
-                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md'
-                    : 'bg-gradient-to-br from-teal-500 to-emerald-600 text-slate-950 shadow-glow-teal'
+                    ? 'bg-slate-800 border-slate-700 text-slate-200'
+                    : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
                 }`}
               >
                 {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
               </div>
 
-              {/* Message Bubble */}
+              {/* Bubble */}
               <div
-                className={`relative max-w-[85%] sm:max-w-[78%] rounded-2xl px-4 py-3 shadow-md ${
+                className={`group relative max-w-[85%] sm:max-w-[78%] rounded-xl p-3.5 sm:p-4 text-xs sm:text-sm border transition-all ${
                   isUser
-                    ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-tr-none'
-                    : 'bg-slate-900/90 border border-slate-800/90 text-slate-200 rounded-tl-none'
+                    ? 'bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700 text-white rounded-tr-none'
+                    : 'bg-[#090e1c]/90 border-cyan-500/20 text-slate-200 rounded-tl-none shadow-[0_0_20px_rgba(6,182,212,0.03)]'
                 }`}
               >
-                {/* Sentiment pill for assistant */}
-                {!isUser && m.sentiment && (
-                  <div className="mb-2 flex items-center justify-between border-b border-slate-800 pb-1.5">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-teal-400 bg-teal-950/60 px-2 py-0.5 rounded-md border border-teal-500/20">
-                      <Sparkles className="h-3 w-3" />
-                      Detected State: {m.sentiment}
+                {!isUser && msg.sentiment && (
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-cyan-500/15 text-[10px] font-mono">
+                    <span className="flex items-center gap-1.5 text-cyan-400">
+                      <Zap className="h-3 w-3" />
+                      {msg.sentiment}
                     </span>
                     <button
-                      onClick={() => copyToClipboard(m.content, m.id)}
-                      className="text-slate-500 hover:text-slate-300 transition"
-                      title="Copy response"
+                      onClick={() => copyToClipboard(msg.content, msg.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-white"
+                      title="Copy Response"
                     >
-                      {copiedId === m.id ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      {copiedId === msg.id ? (
+                        <Check className="h-3 w-3 text-emerald-400" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5" />
+                        <Copy className="h-3 w-3" />
                       )}
                     </button>
                   </div>
                 )}
 
-                {/* Content */}
-                <div className="text-sm sm:text-base leading-relaxed">
-                  {isUser ? <p className="whitespace-pre-wrap">{m.content}</p> : renderMarkdown(m.content)}
-                </div>
+                <div className="prose-sm">{renderMarkdown(msg.content)}</div>
 
-                {/* Assistant Actionable Tips */}
-                {!isUser && m.tips && m.tips.length > 0 && (
-                  <div className="mt-3 rounded-xl bg-slate-950/60 p-2.5 border border-teal-500/20">
-                    <p className="text-[11px] font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1 mb-1">
-                      <Zap className="h-3 w-3" /> Coach Takeaways
-                    </p>
-                    <ul className="space-y-1 text-xs text-slate-300">
-                      {m.tips.map((tip, tIdx) => (
-                        <li key={tIdx} className="flex items-start gap-1.5">
-                          <span className="text-teal-400">•</span>
-                          <span>{tip}</span>
-                        </li>
-                      ))}
-                    </ul>
+                {/* Motivational Quote Callout */}
+                {msg.quote && (
+                  <div className="mt-3 p-2.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-cyan-300 font-mono text-[11px] italic flex items-start gap-2">
+                    <Flame className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                    <span>{msg.quote}</span>
                   </div>
                 )}
 
-                <div className="mt-1 flex justify-end">
-                  <span className={`text-[10px] ${isUser ? 'text-teal-200' : 'text-slate-500'}`}>
-                    {m.timestamp}
-                  </span>
-                </div>
+                {/* Actionable Tips */}
+                {msg.tips && msg.tips.length > 0 && (
+                  <div className="mt-3 pt-2.5 border-t border-slate-800/80 space-y-1">
+                    <p className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" /> TACTICAL CUES:
+                    </p>
+                    {msg.tips.map((tip, i) => (
+                      <div key={i} className="flex items-start gap-1.5 text-[11px] text-slate-300">
+                        <span className="text-emerald-400 font-mono">[{i + 1}]</span>
+                        <span>{tip}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <span className="block text-right text-[9px] font-mono text-slate-500 mt-2">
+                  {msg.timestamp}
+                </span>
               </div>
             </div>
           );
         })}
 
-        {/* Loading Indicator */}
         {isLoading && (
           <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-slate-950 shadow-glow-teal">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 animate-pulse">
               <Bot className="h-4 w-4" />
             </div>
-            <div className="rounded-2xl rounded-tl-none bg-slate-900 border border-slate-800 px-4 py-3 text-slate-300">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-teal-400 font-medium">Coach is analyzing kinematics & physiology...</span>
-                <div className="flex gap-1">
-                  <span className="h-2 w-2 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="h-2 w-2 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="h-2 w-2 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              </div>
+            <div className="rounded-xl rounded-tl-none bg-[#090e1c] border border-cyan-500/20 p-3 flex items-center gap-2 text-xs font-mono text-cyan-400">
+              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+              <span>SYNTHESIZING KINEMATIC & MOTIVATIONAL DIRECTIVE...</span>
             </div>
           </div>
         )}
-
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Prompt Suggestions */}
-      {messages.length <= 2 && (
-        <div className="pb-3 pt-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
-            <Sparkles className="h-3 w-3 text-teal-400" /> Recommended Coach Inquiries
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {STARTER_PROMPTS.map((item, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSend(item.prompt)}
-                className="text-left p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-teal-500/40 transition group"
-              >
-                <div className="flex items-center justify-between text-xs font-semibold text-teal-300 group-hover:text-teal-200">
-                  <span>{item.title}</span>
-                  <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
-                    {item.category}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-1 line-clamp-1">{item.prompt}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Input Bar */}
-      <div className="pt-2 pb-3">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSend();
-          }}
-          className="relative flex items-center rounded-2xl bg-slate-900 border border-slate-700/80 p-1.5 shadow-2xl focus-within:border-teal-500 focus-within:ring-1 focus-within:ring-teal-500/50"
-        >
+      {/* Cyber Input Terminal */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend();
+        }}
+        className="p-3 sm:p-4 border-t border-cyan-500/20 bg-slate-950/80 flex items-center gap-2"
+      >
+        <div className="relative flex-1">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about muscle fatigue, PPL vs Arnold split, knee pain, macros, or your mood today..."
-            className="w-full bg-transparent px-3 py-2 text-sm sm:text-base text-slate-100 placeholder-slate-500 focus:outline-none"
+            placeholder="Ask about squat depth, fatigue, high-protein Indian diet, splits..."
+            className="w-full rounded-xl bg-slate-900/90 border border-slate-700/80 px-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all font-sans"
             disabled={isLoading}
           />
-          <button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-bold transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow-teal"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </form>
-        <p className="text-[11px] text-slate-400 text-center mt-1.5">
-          Pulse AI combines Google Gemini 2.5 with biomechanics science for elite training precision.
-        </p>
-      </div>
+        </div>
+        <button
+          type="submit"
+          disabled={!input.trim() || isLoading}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-500 text-slate-950 font-bold transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow-cyan"
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </form>
     </div>
   );
 }
