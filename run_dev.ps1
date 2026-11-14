@@ -1,25 +1,32 @@
-# Pulse AI Development Startup Script (Windows PowerShell)
-Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host " 🚀 Starting Pulse AI (FastAPI + Next.js Dev Servers)" -ForegroundColor Cyan
-Write-Host "======================================================" -ForegroundColor Cyan
+# Pulse AI Full-Stack Development Runner
+Write-Host "==============================================================" -ForegroundColor Cyan
+Write-Host "             PULSE AI - FULL STACK RUNNER" -ForegroundColor Cyan
+Write-Host "    FastAPI Backend (:8000) + Next.js Frontend (:3000)" -ForegroundColor Cyan
+Write-Host "==============================================================" -ForegroundColor Cyan
 
-# 1. Start FastAPI Backend in background job
-Write-Host "`n[1/2] Starting FastAPI Backend on http://127.0.0.1:8000 ..." -ForegroundColor Yellow
-$backendJob = Start-Job -ScriptBlock {
-    Set-Location $using:PSScriptRoot
-    python -m uvicorn backend.main:app --port 8000 --reload
-}
+$projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# 1. Start FastAPI Backend
+Write-Host "`n[1/3] Starting FastAPI Backend on http://127.0.0.1:8000..." -ForegroundColor Yellow
+$backend = Start-Process -FilePath "python" -ArgumentList "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload" -WorkingDirectory $projectRoot -PassThru
 
 Start-Sleep -Seconds 2
 
 # 2. Start Next.js Frontend
-Write-Host "[2/2] Starting Next.js Frontend on http://localhost:3000 ..." -ForegroundColor Green
-Write-Host "`nOpen http://localhost:3000 in your browser to use Pulse AI!`n" -ForegroundColor Cyan
+Write-Host "[2/3] Starting Next.js Frontend on http://localhost:3000..." -ForegroundColor Yellow
+$frontend = Start-Process -FilePath "npm.cmd" -ArgumentList "run", "dev" -WorkingDirectory (Join-Path $projectRoot "frontend") -PassThru
+
+Start-Sleep -Seconds 2
+Start-Process "http://localhost:3000"
+
+Write-Host "`n[3/3] Both services are live!" -ForegroundColor Green
+Write-Host "  * Frontend UI: http://localhost:3000" -ForegroundColor White
+Write-Host "  * Backend API: http://127.0.0.1:8000/docs" -ForegroundColor White
+Write-Host "`nPress Ctrl+C or close this window to terminate both servers." -ForegroundColor Gray
 
 try {
-    npm.cmd run dev
+    Wait-Process -Id $frontend.Id
 } finally {
-    Write-Host "`nStopping backend server..." -ForegroundColor Yellow
-    Stop-Job $backendJob -ErrorAction SilentlyContinue
-    Remove-Job $backendJob -ErrorAction SilentlyContinue
+    Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue
+    Stop-Process -Id $frontend.Id -Force -ErrorAction SilentlyContinue
 }
